@@ -4,9 +4,14 @@ A production-ready, fully responsive web application built from the
 [`AI_LAB_with_dump.ipynb`](notebooks/AI_LAB_with_dump.ipynb) AI Lab notebook.
 The notebook's trained **linear SVM** classifies iris flowers into
 *setosa*, *versicolor* or *virginica* from four measurements — and this repo
-serves that exact model behind a polished dark-glass UI and a clean JSON API.
+serves that exact model behind a polished light-first UI (with dark mode) and a
+clean JSON API.
 
-![Desktop hero](docs/screenshots/shot-desktop-hero.png)
+![Desktop hero (light theme)](docs/screenshots/shot-desktop-hero.png)
+
+Dark mode is one click away — the sun/moon toggle in the navbar:
+
+![Dark hero](docs/screenshots/shot-dark-hero.png)
 
 | Prediction console | Mobile |
 |---|---|
@@ -16,9 +21,16 @@ serves that exact model behind a polished dark-glass UI and a clean JSON API.
 
 ## ✨ Features
 
-- **Live prediction console** — four measurement sliders with species presets,
-  animated confidence donut, per-class confidence bars and the raw API response
-  in a collapsible JSON view.
+- **Light theme by default** with a persisted **light/dark toggle** — charts swap
+  to a matching variant per theme (both generated from the saved model).
+- **Numeric input boxes** — type a measurement or tap the ± steppers; valid
+  ranges are shown beside each label and values are clamped automatically.
+  Press **Enter** in any box to classify instantly.
+- **Species presets** — Setosa-like / Versicolor-like / Virginica-like / Random
+  fill all four boxes in one tap.
+- **Animated results** — confidence donut, per-class confidence bars, latency
+  chip and the raw API response in a collapsible JSON view; the result card is
+  colour-themed per predicted species.
 - **Model insights** — confusion matrix, feature distributions and SVM decision
   regions, all regenerated from the saved `iris_model.pkl` and the notebook's
   exact data pipeline.
@@ -73,7 +85,11 @@ pip install -r requirements.txt
 python app.py                    # respects $PORT, defaults to 5000
 ```
 
-Open http://localhost:5000 and drag the sliders.
+Open http://localhost:5000, type your measurements and classify.
+
+> 🎨 The site renders in **light mode by default**; the navbar toggle switches to
+> dark and the choice is remembered in `localStorage` (falling back to the OS
+> preference on first visit).
 
 ## 🔌 API reference
 
