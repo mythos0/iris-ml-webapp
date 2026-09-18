@@ -1,12 +1,36 @@
 /* ============================================================================
    IrisLab — frontend logic
-   Vanilla JS: sliders, presets, live prediction, reveal animations, nav.
+   Vanilla JS: theme toggle, numeric inputs, presets, live prediction,
+   reveal animations, nav.
    ========================================================================== */
 (function () {
   "use strict";
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  /* ----------------------------- theme toggle --------------------------- */
+  const themeToggle = $("#themeToggle");
+  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+
+  function currentTheme() {
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  }
+
+  // If the visitor has never chosen, follow the OS preference.
+  try {
+    if (!localStorage.getItem("irislab-theme")) {
+      document.documentElement.setAttribute(
+        "data-theme", prefersDark.matches ? "dark" : "light"
+      );
+    }
+  } catch (e) { /* storage unavailable — keep light default */ }
+
+  themeToggle.addEventListener("click", () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("irislab-theme", next); } catch (e) {}
+  });
 
   /* ----------------------------- scroll progress ------------------------ */
   const scrollBar = $("#scrollBar");
@@ -51,18 +75,50 @@
   );
   $$(".reveal").forEach((el) => revealObserver.observe(el));
 
-  /* ------------------------------- sliders ------------------------------ */
-  const sliders = {};
-  $$('input[type="range"]').forEach((input) => {
-    sliders[input.id] = input;
-    const update = () => {
-      const pct = ((input.value - input.min) / (input.max - input.min)) * 100;
-      input.style.setProperty("--fill", pct.toFixed(2) + "%");
-      const out = document.getElementById(input.id + "-out");
-      if (out) out.textContent = Number(input.value).toFixed(1) + " cm";
-    };
-    input.addEventListener("input", update);
-    update();
+  /* --------------------------- measurement inputs ----------------------- */
+  const inputs = {};
+  const ranges = {};
+  $$("input[type='number']").forEach((input) => {
+    inputs[input.id] = input;
+    ranges[input.id] = { min: parseFloat(input.min), max: parseFloat(input.max) };
+  });
+  const measureKeys = ["sepal_length", "sepal_width", "petal_length", "petal_width"];
+
+  function clampValue(input, raw) {
+    const { min, max } = ranges[input.id];
+    let num = parseFloat(raw);
+    if (isNaN(num) || !isFinite(num)) num = min;
+    return Math.min(max, Math.max(min, num));
+  }
+
+  function markValid(input) {
+    input.closest(".input-wrap").classList.remove("invalid");
+  }
+
+  Object.values(inputs).forEach((input) => {
+    input.addEventListener("input", markValid);
+    input.addEventListener("change", () => {
+      input.value = clampValue(input, input.value).toFixed(1);
+    });
+    // Enter key inside any box triggers the prediction
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        predictBtn.click();
+      }
+    });
+  });
+
+  /* ± stepper buttons */
+  $$(".step-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const input = inputs[btn.dataset.target];
+      const step = parseFloat(btn.dataset.step);
+      const next = clampValue(input, (parseFloat(input.value) || 0) + step);
+      input.value = next.toFixed(1);
+      markValid(input);
+      input.focus();
+    });
   });
 
   /* ------------------------------- presets ------------------------------ */
@@ -86,31 +142,11 @@
             }
           : PRESETS[preset];
       Object.entries(values).forEach(([key, value]) => {
-        const input = sliders[key];
-        input.value = value;
-        input.dispatchEvent(new Event("input", { bubbles: false }));
+        inputs[key].value = value.toFixed(1);
+        markValid(inputs[key]);
       });
     });
   });
-
-  /* ------------------------------- species ------------------------------ */
-  const SPECIES_META = {
-    setosa: {
-      color: "#2dd4bf",
-      soft: "rgba(45, 212, 191, 0.15)",
-      blurb: "Iris setosa — compact petals, linearly separable from the rest.",
-    },
-    versicolor: {
-      color: "#a78bfa",
-      soft: "rgba(139, 92, 246, 0.16)",
-      blurb: "Iris versicolor — the mid-band iris, most prone to overlap.",
-    },
-    virginica: {
-      color: "#f472b6",
-      soft: "rgba(244, 114, 182, 0.16)",
-      blurb: "Iris virginica — the large-flowered iris with wide petals.",
-    },
-  };
 
   /* ------------------------------ predict ------------------------------- */
   const predictBtn = $("#predictBtn");
@@ -131,12 +167,18 @@
   };
 
   predictBtn.addEventListener("click", async () => {
-    const payload = {
-      sepal_length: Number(sliders.sepal_length.value),
-      sepal_width: Number(sliders.sepal_width.value),
-      petal_length: Number(sliders.petal_length.value),
-      petal_width: Number(sliders.petal_width.value),
-    };
+    const payload = {};
+    let hasInvalid = false;
+    measureKeys.forEach((key) => {
+      const input = inputs[key];
+      const value = clampValue(input, input.value);
+      if (input.value === "" || isNaN(parseFloat(input.value))) {
+        input.closest(".input-wrap").classList.add("invalid");
+        hasInvalid = true;
+      }
+      payload[key] = Number(value.toFixed(1));
+    });
+    if (hasInvalid) return;
 
     btnLabel.textContent = "Classifying…";
     predictBtn.disabled = true;
@@ -165,30 +207,24 @@
 
   function renderResult(data) {
     const species = data.prediction;
-    const meta = SPECIES_META[species] || SPECIES_META.versicolor;
     const card = panelCard;
 
-    card.style.setProperty("--species-main", meta.color);
-    card.style.setProperty("--species-soft", meta.soft);
+    // theme-aware colours come from CSS via [data-species]
+    card.dataset.species = species;
 
     $("#resultBadge").textContent = "● " + species;
     $("#latencyChip").textContent = (data.latency_ms ?? 0).toFixed(1) + " ms";
     $("#speciesName").textContent = species;
-    $("#speciesName").style.color = meta.color;
-    $("#speciesBlurb").textContent = meta.blurb;
+    $("#speciesBlurb").textContent = SPECIES_BLURBS[species] || "Iris species predicted by the model.";
 
     // input echo
-    const echo = $("#inputEcho");
-    const labels = ["Sepal L", "Sepal W", "Petal L", "Petal W"];
     const keys = ["sepal_length", "sepal_width", "petal_length", "petal_width"];
-    echo.querySelectorAll("dd").forEach((dd, i) => {
+    $("#inputEcho").querySelectorAll("dd").forEach((dd, i) => {
       dd.textContent = Number(data.input[keys[i]]).toFixed(1) + " cm";
     });
-    void labels;
 
     // donut
     const conf = Math.max(0, Math.min(1, data.confidence || 0));
-    donutArc.style.stroke = meta.color;
     donutArc.style.strokeDashoffset = CIRCUMFERENCE * (1 - conf);
     $("#confidencePct").textContent = (conf * 100).toFixed(1) + "%";
 
@@ -206,6 +242,12 @@
     $("#rawJson").textContent = JSON.stringify(data, null, 2);
     showPanel(panelCard);
   }
+
+  const SPECIES_BLURBS = {
+    setosa: "Iris setosa — compact petals, linearly separable from the rest.",
+    versicolor: "Iris versicolor — the mid-band iris, most prone to overlap.",
+    virginica: "Iris virginica — the large-flowered iris with wide petals.",
+  };
 
   /* --------------------------- copy curl button ------------------------- */
   const copyBtn = $("#copyCurl");
