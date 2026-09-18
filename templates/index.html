@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IrisLab · Iris Species Classifier</title>
+  <meta name="description" content="Classify iris flowers into setosa, versicolor or virginica with a linear SVM trained in the AI Lab notebook. Live predictions, model insights and a REST API." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%238b5cf6'/%3E%3Cstop offset='1' stop-color='%23d946ef'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M16 3c3.5 4.5 5 8.5 5 12.5S19 24 16 29c-3-5-5-9.5-5-13.5S12.5 7.5 16 3z' fill='url(%23g)'/%3E%3Cpath d='M4 10c5.5.5 9.5 2.5 12 6s3.5 8 3 13c-5.5-1.5-9.5-4-12-7.5S3.5 14.5 4 10z' fill='url(%23g)' opacity='.75'/%3E%3Cpath d='M28 10c-5.5.5-9.5 2.5-12 6s-3.5 8-3 13c5.5-1.5 9.5-4 12-7.5s3.5-7 3-11.5z' fill='url(%23g)' opacity='.75'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+  <!-- scroll progress -->
+  <div class="scroll-progress" aria-hidden="true"><span id="scrollBar"></span></div>
+
+  <!-- ============================== NAV ============================== -->
+  <nav class="nav" id="nav">
+    <div class="nav-inner">
+      <a class="brand" href="#top" aria-label="IrisLab home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" width="26" height="26" fill="none">
+            <defs>
+              <linearGradient id="petalGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#d946ef"/>
+              </linearGradient>
+            </defs>
+            <path d="M16 3c3.5 4.5 5 8.5 5 12.5S19 24 16 29c-3-5-5-9.5-5-13.5S12.5 7.5 16 3z" fill="url(#petalGrad)"/>
+            <path d="M4 10c5.5.5 9.5 2.5 12 6s3.5 8 3 13c-5.5-1.5-9.5-4-12-7.5S3.5 14.5 4 10z" fill="url(#petalGrad)" opacity=".72"/>
+            <path d="M28 10c-5.5.5-9.5 2.5-12 6s-3.5 8-3 13c5.5-1.5 9.5-4 12-7.5s3.5-7 3-11.5z" fill="url(#petalGrad)" opacity=".72"/>
+          </svg>
+        </span>
+        <span class="brand-name">Iris<em>Lab</em></span>
+      </a>
+      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links" id="navLinks">
+        <a href="#console">Console</a>
+        <a href="#insights">Insights</a>
+        <a href="#dataset">Dataset</a>
+        <a href="#api">API</a>
+        <a class="btn btn-ghost btn-sm" href="https://github.com/features" target="_blank" rel="noopener">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+          Repo
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <main id="top">
+
+    <!-- ============================== HERO ============================== -->
+    <header class="hero">
+      <div class="aurora" aria-hidden="true">
+        <div class="blob blob-a"></div>
+        <div class="blob blob-b"></div>
+        <div class="blob blob-c"></div>
+        <div class="grid-overlay"></div>
+      </div>
+      <div class="hero-inner">
+        <div class="hero-copy reveal">
+          <span class="eyebrow"><span class="pulse-dot"></span> AI Lab · Linear SVM · scikit-learn</span>
+          <h1>Iris species,<br /><span class="grad-text">classified in&nbsp;milliseconds.</span></h1>
+          <p class="lede">
+            A production-ready web app built from the <code>AI_LAB_with_dump</code> notebook —
+            data cleaning, label encoding and a support vector machine that maps four flower
+            measurements to one of three iris species, served live through a REST API.
+          </p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="#console">
+              Start predicting
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m0 0L9 4m4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="btn btn-ghost" href="#api">View the API</a>
+          </div>
+          <ul class="stat-chips" aria-label="Model summary">
+            <li><strong id="statAccuracy">93.3%</strong><span>test accuracy</span></li>
+            <li><strong>100%</strong><span>train accuracy</span></li>
+            <li><strong>149</strong><span>samples</span></li>
+            <li><strong>4</strong><span>features</span></li>
+          </ul>
+        </div>
+
+        <div class="hero-visual reveal" aria-hidden="true">
+          <div class="orbit orbit-1"></div>
+          <div class="orbit orbit-2"></div>
+          <div class="orbit orbit-3"></div>
+          <svg class="hero-flower" viewBox="0 0 200 220" width="300" height="330">
+            <defs>
+              <linearGradient id="p1" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#6d28d9"/>
+              </linearGradient>
+              <linearGradient id="p2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#e879f9"/><stop offset="1" stop-color="#a21caf"/>
+              </linearGradient>
+              <radialGradient id="glow" cx="50%" cy="45%" r="55%">
+                <stop offset="0" stop-color="#8b5cf6" stop-opacity=".55"/>
+                <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="100" cy="105" r="95" fill="url(#glow)"/>
+            <g class="petal-sway">
+              <path d="M100 105 C 88 70, 88 40, 100 14 C 112 40, 112 70, 100 105 Z" fill="url(#p1)"/>
+              <path d="M100 108 C 66 96, 42 78, 30 48 C 62 52, 88 70, 100 108 Z" fill="url(#p2)" opacity=".92"/>
+              <path d="M100 108 C 134 96, 158 78, 170 48 C 138 52, 112 70, 100 108 Z" fill="url(#p2)" opacity=".92"/>
+              <path d="M100 110 C 72 112, 52 128, 40 158 C 70 152, 90 134, 100 110 Z" fill="url(#p1)" opacity=".85"/>
+              <path d="M100 110 C 128 112, 148 128, 160 158 C 130 152, 110 134, 100 110 Z" fill="url(#p1)" opacity=".85"/>
+            </g>
+            <circle cx="100" cy="110" r="9" fill="#fbbf24"/>
+            <circle cx="100" cy="110" r="4.5" fill="#78350f"/>
+            <path d="M100 118 C 100 150, 100 175, 100 205" stroke="#4ade80" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <path d="M100 160 C 86 152, 76 152, 64 156 C 74 166, 86 168, 100 160 Z" fill="#34d399"/>
+            <path d="M100 178 C 114 170, 124 170, 136 174 C 126 184, 114 186, 100 178 Z" fill="#34d399"/>
+          </svg>
+          <div class="float-chip chip-1"><span class="chip-dot dot-teal"></span>setosa · petal ≤ 1.9 cm</div>
+          <div class="float-chip chip-2"><span class="chip-dot dot-violet"></span>versicolor · 3.0–5.1 cm</div>
+          <div class="float-chip chip-3"><span class="chip-dot dot-pink"></span>virginica · petal &gt; 4.8 cm</div>
+        </div>
+      </div>
+      <a class="scroll-hint" href="#console" aria-label="Scroll to prediction console">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 4v11m0 0 4.5-4.5M10 15l-4.5-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </header>
+
+    <!-- ============================ CONSOLE ============================ -->
+    <section class="section" id="console">
+      <div class="section-head reveal">
+        <span class="section-kicker">Prediction console</span>
+        <h2>Measure a flower, get its species</h2>
+        <p>Drag the four sliders to match your specimen. The request hits the same linear SVC
+           the notebook trained — response time is typically under 5&nbsp;ms.</p>
+      </div>
+
+      <div class="console-card glass reveal">
+        <div class="console-grid">
+          <!-- inputs -->
+          <div class="console-inputs">
+            <div class="console-toolbar">
+              <h3>Flower measurements</h3>
+              <div class="presets" role="group" aria-label="Quick presets">
+                <button class="chip preset-btn" data-preset="setosa">Setosa-like</button>
+                <button class="chip preset-btn" data-preset="versicolor">Versicolor-like</button>
+                <button class="chip preset-btn" data-preset="virginica">Virginica-like</button>
+                <button class="chip preset-btn" data-preset="random">🎲 Random</button>
+              </div>
+            </div>
+
+            <div class="slider-row" data-feature="sepal_length">
+              <div class="slider-meta">
+                <label for="sepal_length">Sepal length</label>
+                <output id="sepal_length-out" for="sepal_length">5.1 cm</output>
+              </div>
+              <input type="range" id="sepal_length" min="3.0" max="8.0" step="0.1" value="5.1" />
+            </div>
+
+            <div class="slider-row" data-feature="sepal_width">
+              <div class="slider-meta">
+                <label for="sepal_width">Sepal width</label>
+                <output id="sepal_width-out" for="sepal_width">3.5 cm</output>
+              </div>
+              <input type="range" id="sepal_width" min="1.8" max="4.8" step="0.1" value="3.5" />
+            </div>
+
+            <div class="slider-row" data-feature="petal_length">
+              <div class="slider-meta">
+                <label for="petal_length">Petal length</label>
+                <output id="petal_length-out" for="petal_length">1.4 cm</output>
+              </div>
+              <input type="range" id="petal_length" min="0.8" max="7.2" step="0.1" value="1.4" />
+            </div>
+
+            <div class="slider-row" data-feature="petal_width">
+              <div class="slider-meta">
+                <label for="petal_width">Petal width</label>
+                <output id="petal_width-out" for="petal_width">0.2 cm</output>
+              </div>
+              <input type="range" id="petal_width" min="0.0" max="3.0" step="0.1" value="0.2" />
+            </div>
+
+            <button class="btn btn-primary btn-block" id="predictBtn">
+              <span class="btn-label">Classify flower</span>
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.5 8h11m0 0-4.2-4.2M13.5 8l-4.2 4.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <p class="fineprint">Values in centimetres · sent as <code>sepal_length</code>, <code>sepal_width</code>, <code>petal_length</code>, <code>petal_width</code></p>
+          </div>
+
+          <!-- result -->
+          <div class="console-result" id="resultPanel" aria-live="polite">
+            <div class="result-idle" id="resultIdle">
+              <div class="idle-icon" aria-hidden="true">
+                <svg width="42" height="42" viewBox="0 0 32 32" fill="none"><path d="M16 5c2.6 3.4 3.8 6.4 3.8 9.4S18.3 20 16 24c-2.3-4-3.8-6.6-3.8-9.6S13.4 8.4 16 5z" fill="#8b5cf6" opacity=".8"/><path d="M7 10c4.1.4 7.1 1.9 9 4.5s2.6 6 2.2 9.7c-4.1-1.1-7.1-3-9-5.6S6.6 13.3 7 10z" fill="#d946ef" opacity=".55"/><path d="M25 10c-4.1.4-7.1 1.9-9 4.5s-2.6 6-2.2 9.7c4.1-1.1 7.1-3 9-5.6s2.6-5.5 2.2-8.6z" fill="#2dd4bf" opacity=".55"/></svg>
+              </div>
+              <h4>Ready when you are</h4>
+              <p>Adjust the sliders — or use a preset — and press <strong>Classify flower</strong> to see the prediction with per-class confidence.</p>
+            </div>
+
+            <div class="result-loading hidden" id="resultLoading">
+              <div class="spinner" aria-hidden="true"></div>
+              <p>Querying the SVM…</p>
+            </div>
+
+            <div class="result-card hidden" id="resultCard">
+              <div class="result-topline">
+                <span class="result-badge" id="resultBadge">● versicolor</span>
+                <span class="latency" id="latencyChip">2.1 ms</span>
+              </div>
+              <div class="result-main">
+                <div class="confidence-donut" aria-hidden="true">
+                  <svg viewBox="0 0 120 120" width="132" height="132">
+                    <circle cx="60" cy="60" r="50" class="donut-track"/>
+                    <circle cx="60" cy="60" r="50" class="donut-value" id="donutArc"/>
+                  </svg>
+                  <div class="donut-center">
+                    <strong id="confidencePct">–%</strong>
+                    <span>confidence</span>
+                  </div>
+                </div>
+                <div class="result-summary">
+                  <h3 id="speciesName">versicolor</h3>
+                  <p id="speciesBlurb">Iris versicolor — the mid-band iris.</p>
+                  <dl class="input-echo" id="inputEcho">
+                    <div><dt>Sepal L</dt><dd>–</dd></div>
+                    <div><dt>Sepal W</dt><dd>–</dd></div>
+                    <div><dt>Petal L</dt><dd>–</dd></div>
+                    <div><dt>Petal W</dt><dd>–</dd></div>
+                  </dl>
+                </div>
+              </div>
+              <div class="class-bars" id="classBars">
+                <h5>Relative class confidence <span class="hint" title="Softmax over the SVM's decision scores — a relative signal, not a calibrated probability.">ⓘ</span></h5>
+                <div class="bar-row" data-class="setosa"><span class="bar-label">setosa</span><div class="bar-track"><div class="bar-fill" id="bar-setosa"></div></div><span class="bar-value" id="val-setosa">–</span></div>
+                <div class="bar-row" data-class="versicolor"><span class="bar-label">versicolor</span><div class="bar-track"><div class="bar-fill" id="bar-versicolor"></div></div><span class="bar-value" id="val-versicolor">–</span></div>
+                <div class="bar-row" data-class="virginica"><span class="bar-label">virginica</span><div class="bar-track"><div class="bar-fill" id="bar-virginica"></div></div><span class="bar-value" id="val-virginica">–</span></div>
+              </div>
+              <details class="raw-json">
+                <summary>Raw API response</summary>
+                <pre id="rawJson"></pre>
+              </details>
+            </div>
+
+            <div class="result-error hidden" id="resultError">
+              <strong>Prediction failed.</strong>
+              <p id="errorMsg"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ INSIGHTS ============================ -->
+    <section class="section section-alt" id="insights">
+      <div class="section-head reveal">
+        <span class="section-kicker">Model insights</span>
+        <h2>How the classifier behaves</h2>
+        <p>Every figure below is regenerated from the exact data pipeline and the saved
+           <code>iris_model.pkl</code> — the same objects the live API serves.</p>
+      </div>
+
+      <div class="stat-cards reveal">
+        <div class="stat-card glass"><strong class="grad-text" data-countup="93.3">0%</strong><span>Test accuracy</span><p>30 unseen flowers, 28 correct</p></div>
+        <div class="stat-card glass"><strong data-countup="100">0%</strong><span>Train accuracy</span><p>Perfectly separable training set</p></div>
+        <div class="stat-card glass"><strong data-countup="2">0</strong><span>Misclassifications</span><p>Versicolor ↔ virginica boundary</p></div>
+        <div class="stat-card glass"><strong data-countup="80" data-suffix="/20">0</strong><span>Train / test split</span><p>random_state = 42</p></div>
+      </div>
+
+      <div class="charts-grid">
+        <figure class="chart-card glass reveal">
+          <figcaption>
+            <h4>Confusion matrix</h4>
+            <p>Setosa is perfectly separated; the only errors are two versicolors drifting into virginica territory.</p>
+          </figcaption>
+          <img src="{{ url_for('static', filename='images/confusion_matrix.png') }}" alt="Confusion matrix heatmap of the linear SVM on the 30-flower test set" loading="lazy" />
+        </figure>
+        <figure class="chart-card glass reveal">
+          <figcaption>
+            <h4>Feature distributions</h4>
+            <p>Petal measurements split the species far more cleanly than sepal measurements — that's what the SVM exploits.</p>
+          </figcaption>
+          <img src="{{ url_for('static', filename='images/feature_distributions.png') }}" alt="KDE distributions of the four iris features per species" loading="lazy" />
+        </figure>
+        <figure class="chart-card glass wide reveal">
+          <figcaption>
+            <h4>Decision regions</h4>
+            <p>The learned linear boundaries on the petal plane (sepals held at their mean). Dashed lines are the maximum-margin hyperplanes.</p>
+          </figcaption>
+          <img src="{{ url_for('static', filename='images/petal_regions.png') }}" alt="Scatter plot of petal length versus petal width with the SVM decision regions shaded" loading="lazy" />
+        </figure>
+      </div>
+    </section>
+
+    <!-- ============================ DATASET ============================ -->
+    <section class="section" id="dataset">
+      <div class="section-head reveal">
+        <span class="section-kicker">The dataset</span>
+        <h2>150 flowers, 4 measurements, 3 species</h2>
+        <p>Ronald Fisher's 1936 iris data — the "hello world" of pattern recognition. The notebook
+           injects synthetic missing values, then repairs them with column means before training.</p>
+      </div>
+
+      <div class="dataset-grid">
+        <div class="table-card glass reveal">
+          <h4>Feature reference</h4>
+          <table>
+            <thead><tr><th>Feature</th><th>Unit</th><th>Min</th><th>Max</th><th>Discriminative power</th></tr></thead>
+            <tbody>
+              <tr><td>Sepal length</td><td>cm</td><td>4.3</td><td>7.9</td><td><span class="power p-low">Low</span></td></tr>
+              <tr><td>Sepal width</td><td>cm</td><td>2.0</td><td>4.4</td><td><span class="power p-low">Low</span></td></tr>
+              <tr><td>Petal length</td><td>cm</td><td>1.0</td><td>6.9</td><td><span class="power p-high">High</span></td></tr>
+              <tr><td>Petal width</td><td>cm</td><td>0.1</td><td>2.5</td><td><span class="power p-high">High</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="class-cards reveal">
+          <article class="class-card glass" data-species="setosa">
+            <div class="class-swatch"></div>
+            <h4>Setosa</h4>
+            <p><strong>49</strong> samples after cleaning</p>
+            <span class="class-note">Tiny petals — linearly separable with zero effort.</span>
+          </article>
+          <article class="class-card glass" data-species="versicolor">
+            <div class="class-swatch"></div>
+            <h4>Versicolor</h4>
+            <p><strong>50</strong> samples after cleaning</p>
+            <span class="class-note">The middle band — overlaps virginica slightly.</span>
+          </article>
+          <article class="class-card glass" data-species="virginica">
+            <div class="class-swatch"></div>
+            <h4>Virginica</h4>
+            <p><strong>50</strong> samples after cleaning</p>
+            <span class="class-note">Largest petals — easy on the far side of the margin.</span>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== API ============================== -->
+    <section class="section section-alt" id="api">
+      <div class="section-head reveal">
+        <span class="section-kicker">REST API &amp; deployment</span>
+        <h2>Everything is programmable</h2>
+        <p>The UI above is a thin skin over two JSON endpoints. Point any HTTP client at this
+           deployment — or clone the repo and host your own on Render.</p>
+      </div>
+
+      <div class="api-grid">
+        <div class="api-card glass reveal">
+          <h4>Endpoints</h4>
+          <ul class="endpoint-list">
+            <li><code class="method m-get">GET</code><code>/api/health</code><span>Service + model status</span></li>
+            <li><code class="method m-get">GET</code><code>/api/model-info</code><span>Features, classes, accuracy</span></li>
+            <li><code class="method m-post">POST</code><code>/api/predict</code><span>Classify one flower</span></li>
+            <li><code class="method m-post">POST</code><code>/predict</code><span>Legacy alias — same behaviour</span></li>
+          </ul>
+          <h4 class="mt">Example request</h4>
+          <div class="code-block">
+            <button class="copy-btn" id="copyCurl" aria-label="Copy curl command">Copy</button>
+            <pre id="curlSnippet">curl -X POST https://YOUR-APP.onrender.com/api/predict \
+  -H "Content-Type: application/json" \
+  -d '{"sepal_length": 5.1,
+       "sepal_width": 3.5,
+       "petal_length": 1.4,
+       "petal_width": 0.2}'</pre>
+          </div>
+          <h4 class="mt">Example response</h4>
+          <div class="code-block">
+            <pre>{
+  "prediction": "setosa",
+  "confidence": 0.9647,
+  "confidence_scores": {
+    "setosa": 0.9647,
+    "versicolor": 0.0321,
+    "virginica": 0.0032
+  },
+  "latency_ms": 1.42
+}</pre>
+          </div>
+        </div>
+
+        <div class="deploy-card glass reveal">
+          <h4>Deploy your own on Render</h4>
+          <ol class="deploy-steps">
+            <li>
+              <span class="step-num">1</span>
+              <div><strong>Push this repo to GitHub.</strong><br />All code, model artifacts and docs are already included.</div>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <div><strong>Render → New → Web Service.</strong><br />Connect the repository and pick the <code>main</code> branch.</div>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <div><strong>Let <code>render.yaml</code> do the work.</strong><br />Build: <code>pip install -r requirements.txt</code> · Start: <code>gunicorn</code> bound to Render's <code>$PORT</code>.</div>
+            </li>
+          </ol>
+          <p class="fineprint">Every push to <code>main</code> triggers an automatic redeploy.</p>
+          <div class="tech-badges">
+            <span class="badge">Flask</span><span class="badge">scikit-learn</span><span class="badge">SVC · linear</span>
+            <span class="badge">joblib</span><span class="badge">Gunicorn</span><span class="badge">Render</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============================= FOOTER ============================= -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="foot-brand">
+        <span class="brand-name">Iris<em>Lab</em></span>
+        <p>Built from <code>AI_LAB_with_dump.ipynb</code> — trained with scikit-learn, served with Flask, deployed on Render.</p>
+      </div>
+      <div class="foot-links">
+        <a href="#console">Console</a>
+        <a href="#insights">Insights</a>
+        <a href="#dataset">Dataset</a>
+        <a href="#api">API</a>
+      </div>
+    </div>
+    <p class="copyright">© <span id="year"></span> IrisLab · Model test accuracy 93.3% · For educational use</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
