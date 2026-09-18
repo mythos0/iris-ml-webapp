@@ -11,21 +11,13 @@
 
   /* ----------------------------- theme toggle --------------------------- */
   const themeToggle = $("#themeToggle");
-  const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
 
   function currentTheme() {
     return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
 
-  // If the visitor has never chosen, follow the OS preference.
-  try {
-    if (!localStorage.getItem("irislab-theme")) {
-      document.documentElement.setAttribute(
-        "data-theme", prefersDark.matches ? "dark" : "light"
-      );
-    }
-  } catch (e) { /* storage unavailable — keep light default */ }
-
+  // Light is ALWAYS the default. Only an explicit choice saved by the
+  // toggle below (handled by the inline bootstrap in <head>) can change it.
   themeToggle.addEventListener("click", () => {
     const next = currentTheme() === "dark" ? "light" : "dark";
     document.documentElement.setAttribute("data-theme", next);

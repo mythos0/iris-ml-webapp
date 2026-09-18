@@ -53,8 +53,8 @@ iris-ml-webapp/
 │   └── model_metadata.json         # feature names, target names, accuracy
 ├── templates/index.html            # single-page responsive frontend
 ├── static/
-│   ├── css/style.css               # design system (dark glassmorphism)
-│   ├── js/app.js                   # sliders, presets, fetch, animations
+│   ├── css/style.css               # design system (light-first + dark mode)
+│   ├── js/app.js                   # numeric input boxes, presets, fetch, animations
 │   └── images/                     # charts generated from the saved model
 ├── notebooks/
 │   ├── AI_LAB_with_dump.ipynb      # original lab notebook, as authored
@@ -71,7 +71,7 @@ iris-ml-webapp/
 
 ```bash
 # 1. clone
-git clone https://github.com/<your-username>/iris-ml-webapp.git
+git clone https://github.com/mythos0/iris-ml-webapp.git
 cd iris-ml-webapp
 
 # 2. create a virtual environment (Python 3.10+)
@@ -87,9 +87,9 @@ python app.py                    # respects $PORT, defaults to 5000
 
 Open http://localhost:5000, type your measurements and classify.
 
-> 🎨 The site renders in **light mode by default**; the navbar toggle switches to
-> dark and the choice is remembered in `localStorage` (falling back to the OS
-> preference on first visit).
+> 🎨 The site renders in **light mode — always the default**, even on devices
+> with a dark OS colour scheme. The navbar toggle switches to dark and an
+> explicit choice is remembered in `localStorage`.
 
 ## 🔌 API reference
 

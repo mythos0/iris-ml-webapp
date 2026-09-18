@@ -335,7 +335,7 @@ html[data-theme="dark"] .eyebrow { color: #c4b5fd; }
 
 /* hero visual */
 .hero-visual { position: relative; display: grid; place-items: center; min-height: 420px; }
-.hero-flower { filter: drop-shadow(0 22px 44px rgba(124, 58, 237, 0.28)); animation: floaty 7s ease-in-out infinite; }
+.hero-flower { max-width: 100%; height: auto; filter: drop-shadow(0 22px 44px rgba(124, 58, 237, 0.28)); animation: floaty 7s ease-in-out infinite; }
 html[data-theme="dark"] .hero-flower { filter: drop-shadow(0 22px 44px rgba(109, 40, 217, 0.45)); }
 .petal-sway { transform-origin: 100px 110px; animation: sway 9s ease-in-out infinite; }
 @keyframes floaty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
@@ -573,7 +573,7 @@ html[data-theme="dark"] .result-card[data-species="virginica"] { --species-soft:
 /* ------------------------------- dataset -------------------------------- */
 .dataset-grid { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 20px; align-items: start; }
 
-.table-card { padding: 26px; }
+.table-card { padding: 26px; overflow-x: auto; }
 .table-card h4 { margin: 0 0 16px; font-size: 1.02rem; }
 .table-card table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .table-card th {
@@ -605,6 +605,11 @@ html[data-theme="dark"] .p-high { color: #6ee7b7; background: rgba(16, 185, 129,
 
 /* --------------------------------- api ---------------------------------- */
 .api-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; align-items: start; }
+
+/* grid blowout guard: long unbreakable code lines (curl snippet) must never
+   stretch a track past the viewport — let the card shrink, pre scrolls inside */
+.api-grid > *, .dataset-grid > *, .console-grid > *,
+.charts-grid > *, .stat-cards > * { min-width: 0; }
 .api-card, .deploy-card { padding: 28px; }
 .api-card h4, .deploy-card h4 { margin: 0 0 16px; font-size: 1.02rem; }
 .api-card h4.mt { margin-top: 26px; }
@@ -741,12 +746,15 @@ html[data-theme="dark"] .m-post { color: #fda4af; background: rgba(244, 63, 94, 
   .api-card, .deploy-card { padding: 20px 18px; }
 }
 
-@media (min-width: 561px) and (max-width: 420px) {
-  /* keep two columns as long as boxes fit comfortably */
-}
-
 @media (max-width: 400px) {
   .measure-grid { grid-template-columns: 1fr; }
+  .eyebrow { font-size: 0.68rem; padding: 7px 12px; letter-spacing: 0.1em; }
+  .hero-visual { transform: scale(0.62); min-height: 240px; }
+  .orbit-3 { width: 260px; height: 260px; }
+  .orbit-2 { width: 215px; height: 215px; }
+  .orbit-1 { width: 170px; height: 170px; }
+  .hero-flower { width: 230px; height: auto; }
+  .scroll-hint { display: none; }
 }
 
 /* --------------------------- reduced motion ----------------------------- */
